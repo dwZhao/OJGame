@@ -5,6 +5,8 @@ import time
 
 NUM_GROVES = 6
 GROVE_NAMES = ["FLA", "CAL", "TEX", "ARZ", "BRA", "SPA"]
+PRODUCT_NAMES = ["ORA", "POJ", "ROJ", "FCOJ"]
+FUTURES_NAMES = ["ORA", "FCOJ"]
 LB_PER_TON = 2000
 
 def getExchangeRates(sheet):
@@ -92,7 +94,7 @@ def getOrderQuantities(sheet, harvestPrices, harvestQuantities):
 	return orderQuantities
 
 def getOrderCost(harvestPrices, orderQuantities):
-	"Multiply prices and orders for costs"
+	"Multiply prices and orders for costs for current year orders"
 
 	orderCost = {}
 
@@ -103,8 +105,24 @@ def getOrderCost(harvestPrices, orderQuantities):
 		orderCost[grove] = cost
 	return orderCost
 
+def getMatFutures(sheet):
+	"Get matured futures arriving per week in FLA"
+
+	return {FUTURES_NAMES[0]:sheet.cell_value(29, 15), FUTURES_NAMES[1]:sheet.cell_value(35, 15)}
+
+def getFuturesArrivalPercentage(sheet):
+	"Get percentage of ORA and FCOJ futures shipped each month to FLA"
+
+	return {FUTURES_NAMES[0]:sheet.row_values(46, 2, 14), 
+	        FUTURES_NAMES[1]:sheet.row_values(47, 2, 14)}
+
+def getFuturesArrivalAmount(sheet):
+	Mat = getMatFutures(sheet)
+	percentages = getFuturesArrivalPercentage(sheet)
+
+	return {future:[(per/100) * Mat[future] for per in percentages[future]] for future in FUTURES_NAMES}
 def main():
-	decBook = xlrd.open_workbook("thebreakfastclub2014.xlsx")
+	decBook = xlrd.open_workbook("decisionSheet.xlsx")
 	exoBook = xlrd.open_workbook("Exo.xlsx")
 
 	rawSheet = decBook.sheet_by_name("raw_materials")
@@ -115,6 +133,8 @@ def main():
 	orderQuantities = getOrderQuantities(rawSheet, harvestPrices, harvestQuantities)
 
 	orderCost = getOrderCost(harvestPrices, orderQuantities)
+
+	print(getFuturesArrivalAmount(rawSheet))
 
 	for grove in GROVE_NAMES:
 		print(grove + " " + str(orderCost[grove]))
