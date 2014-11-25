@@ -175,6 +175,18 @@ def getFCOJTransportCosts(sheet, amountMatFutures, GPSdist, openStorages):
 
 	return transportCosts
 
+def getFCOJTransportQuantity(sheet, amountMatFutures, openStorages):
+	"Calculate FCOJ shipped to facilities"
+
+	transportQuantities = {}
+	for counter, storage in enumerate(openStorages):
+		quantities = []
+		for month in range(0, 12):
+			quantities.append((sheet.cell_value(26 + counter, 2) / 100) * amountMatFutures["FCOJ"][month])
+		transportQuantities[storage] = quantities
+
+	return transportQuantities
+
 def getActualGroveAmount(orderQuantities, amountMatFutures):
 	"Get total amount of oranges shipped out of groves, including futures"
 
@@ -223,6 +235,25 @@ def getGroveORAShipCost(sheet, actualGroveAmount, GPSDist, openPlants, openStora
 		shipCost[grove] = facilityShipCost
 
 	return shipCost
+
+def getGroveORAShipQuantities(sheet, actualGroveAmount, openPlants, openStorages):
+	"Get amounts shipped from groves to facilities"
+
+	groveORAShipPer = getGroveORAShipPer(sheet, openPlants, openStorages)
+
+	shipQuantity = {}
+
+	for grove in GROVE_NAMES:
+		facilityShipQuantity = {}
+		for facility in (openPlants + openStorages):
+			per = groveORAShipPer[grove][facility]
+			quantity = []
+			for month in range(0, 12):
+				quantity.append(tuple(ORA * per for ORA in actualGroveAmount[grove][month]))
+			facilityShipQuantity[facility] = quantity
+		shipQuantity[grove] = facilityShipQuantity
+
+	return shipQuantity
 
 def getStorageMarketPref(sheet, openStorages):
 	"Get the nearest storage to each market"
@@ -281,12 +312,12 @@ def main():
 	#getGroveORAShipPer(shipManuSheet, openPlants, openStorages)
 
 
-	#for grove in GROVE_NAMES:
-	#	print(grove + " " + str(orderCost[grove]))
+	for grove in GROVE_NAMES:
+		print(grove + " " + str(getGroveORAShipQuantities(shipManuSheet, actualGroveAmount, openPlants, openStorages)[grove]))
 
 	pref = getStorageMarketPref(SMSheet, openStorages)
 
-	print(pref["TCY"])
+	# print(getGroveORAShipQuantities(shipManuSheet, actualGroveAmount, openPlants, openStorages))
 
 if __name__ == "__main__":
     main()
