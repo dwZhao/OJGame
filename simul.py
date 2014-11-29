@@ -275,8 +275,8 @@ def getStorageMarketPref(sheet, openStorages):
 
 def main():
 	#decBook = xlrd.open_workbook("decisionSheet.xlsx")
-	#decBook = xlrd.open_workbook('thebreakfastclub2014.xlsx')
-	decBook = xlrd.open_workbook('2014.xlsx')
+	decBook = xlrd.open_workbook('thebreakfastclub2014.xlsx')
+	#decBook = xlrd.open_workbook('2014.xlsx')
 
 	exoBook = xlrd.open_workbook("Exo.xlsx")
 	distBook = xlrd.open_workbook("StaticDataMod.xlsx")
@@ -312,11 +312,61 @@ def main():
 	#getGroveORAShipPer(shipManuSheet, openPlants, openStorages)
 
 
-	for grove in GROVE_NAMES:
-		print(grove + " " + str(getGroveORAShipQuantities(shipManuSheet, actualGroveAmount, openPlants, openStorages)[grove]))
+	#for grove in GROVE_NAMES:
+	#	print(grove + " " + str(getGroveORAShipQuantities(shipManuSheet, actualGroveAmount, openPlants, openStorages)[grove]))
+
+	shipQuantities = getGroveORAShipQuantities(shipManuSheet, actualGroveAmount, openPlants, openStorages)
 
 	pref = getStorageMarketPref(SMSheet, openStorages)
 
+	output = xlsxwriter.Workbook('Output.xlsx')
+
+	costs = output.add_worksheet()
+	orangeOrders = output.add_worksheet()
+
+	costs.write(0, 0, "ORA, ORA Futures Shipping Cost from Grove to Facilities")
+	costs.write(0, 1, "Week")
+	for col in range(0, 48):
+		costs.write(1, col + 2, col + 1)
+	for i, grove in enumerate(GROVE_NAMES):
+		costs.write(2 + i * (1 + len(openPlants + openStorages)), 0, grove)
+		for j, facility in enumerate((openPlants + openStorages)):
+			costs.write(2 + i * (1 + len(openPlants + openStorages)) + j, 1, facility)
+			for k, month in enumerate(range(0, 12)):
+				for week in range(0, 4):
+					costs.write(2 + i * (1 + len(openPlants + openStorages)) + j, 2 + month * 4 + week, shipCost[grove][facility][month][week])
+
+	costs.write(38, 0, "FCOJ Shipping Cost from Grove to Storage by Month")
+	for i, storage in enumerate(openStorages):
+		costs.write(39, 1 + i, storage)
+		for month in range(0, 12):
+			costs.write(40 + month, 1 + i, FCOJTransportCost[storage][month])
+
+	costs.write(55, 0, "ORA Purchase Cost")
+	costs.write(55, 1, "Week")
+	for col in range(0, 48):
+		costs.write(56, col + 2, col + 1)
+	for i, grove in enumerate(GROVE_NAMES):
+		costs.write(57 + i, 0, grove)
+		for k, month in enumerate(range(0, 12)):
+				for week in range(0, 4):
+					costs.write(57 + i, 2 + month * 4 + week, orderCost[grove][month][week])
+
+	orangeOrders.write(0, 0, "ORA, ORA Futures Amount from Grove to Facilities")
+	orangeOrders.write(0, 1, "Week")
+	for col in range(0, 48):
+		orangeOrders.write(1, col + 2, col + 1)
+	for i, grove in enumerate(GROVE_NAMES):
+		orangeOrders.write(2 + i * (1 + len(openPlants + openStorages)), 0, grove)
+		for j, facility in enumerate((openPlants + openStorages)):
+			orangeOrders.write(2 + i * (1 + len(openPlants + openStorages)) + j, 1, facility)
+			for k, month in enumerate(range(0, 12)):
+				for week in range(0, 4):
+					orangeOrders.write(2 + i * (1 + len(openPlants + openStorages)) + j, 2 + month * 4 + week, shipQuantities[grove][facility][month][week])
+
+
+
+	output.close()
 	# print(getGroveORAShipQuantities(shipManuSheet, actualGroveAmount, openPlants, openStorages))
 
 if __name__ == "__main__":
