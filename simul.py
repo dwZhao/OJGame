@@ -323,6 +323,7 @@ def main():
 
 	costs = output.add_worksheet()
 	orangeOrders = output.add_worksheet()
+	marketPref = output.add_worksheet()
 
 	costs.write(0, 0, "ORA, ORA Futures Shipping Cost from Grove to Facilities")
 	costs.write(0, 1, "Week")
@@ -363,6 +364,17 @@ def main():
 			for k, month in enumerate(range(0, 12)):
 				for week in range(0, 4):
 					orangeOrders.write(2 + i * (1 + len(openPlants + openStorages)) + j, 2 + month * 4 + week, shipQuantities[grove][facility][month][week])
+
+	marketPref.write(0, 0, "Region")
+	marketPref.write(0, 1, "Market")
+	marketPref.write(0, 2, "Nearest Storage")
+	marketPref.write(0, 3, "Distance (miles)")
+	marketPref.write(0, 4, "Transportation Cost ($/ton)")
+
+	for counter, market in enumerate(pref):
+		marketPref.write(1 + counter, 1, market)
+		for i in range(0, 3):
+			marketPref.write(1 + counter, 2 + i, pref[market][i])
 
 
 
